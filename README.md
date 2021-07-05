@@ -1,194 +1,175 @@
-# ![TOAST UI Editor](https://uicdn.toast.com/toastui/img/tui-editor-bi.png)
+# TOAST UI Editor for React
 
-> GFM  Markdown and WYSIWYG Editor - Productive and Extensible
+```
+NOTE FROM lgk-bsw: I changed the peer deps in package.json, so this package can be used with React 16 and React 17:
 
-[![github release version](https://img.shields.io/github/v/release/nhn/tui.editor.svg?include_prereleases)](https://github.com/nhn/tui.editor/releases/latest) [![npm version](https://img.shields.io/npm/v/@toast-ui/editor.svg)](https://www.npmjs.com/package/@toast-ui/editor) [![license](https://img.shields.io/github/license/nhn/tui.editor.svg)](https://github.com/nhn/tui.editor/blob/master/LICENSE) [![PRs welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg)](https://github.com/nhn/tui.editor/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) [![code with hearth by NHN](https://img.shields.io/badge/%3C%2F%3E%20with%20%E2%99%A5%20by-NHN-ff1414.svg)](https://github.com/nhn)
+  "peerDependencies": {
+    "react": "^16.0.0 || ^17.0.0"
+  },
+```
 
-<img src="https://user-images.githubusercontent.com/37766175/121809054-446bac80-cc96-11eb-9139-08c6d9ad2d88.png" />
+> This is a [React](https://reactjs.org/) component wrapping [TOAST UI Editor](https://github.com/nhn/tui.editor/tree/master/apps/editor).
 
+[![npm version](https://img.shields.io/npm/v/@toast-ui/react-editor.svg)](https://www.npmjs.com/package/@toast-ui/react-editor)
 
 ## 🚩 Table of Contents
 
-- [Packages](#-packages)
-- [Why TOAST UI Editor?](#-why-toast-ui-editor)
-- [Features](#-features)
-- [Examples](#-examples)
-- [Browser Support](#-browser-support)
-- [Pull Request Steps](#-pull-request-steps)
-- [Contributing](#-contributing)
-- [TOAST UI Family](#-toast-ui-family)
-- [Used By](#-used-by)
-- [License](#-license)
+- [Collect Statistics on the Use of Open Source](#collect-statistics-on-the-use-of-open-source)
+- [Install](#-install)
+- [Usage](#-usage)
 
+## Collect Statistics on the Use of Open Source
 
-## 📦 Packages
+React Wrapper of TOAST UI Editor applies Google Analytics (GA) to collect statistics on the use of open source, in order to identify how widely TOAST UI Editor is used throughout the world. It also serves as important index to determine the future course of projects. location.hostname (e.g. ui.toast.com) is to be collected and the sole purpose is nothing but to measure statistics on the usage. To disable GA, use the `usageStatistics` props like the example below.
 
-### TOAST UI Editor
+```js
+<Editor
+  ...
+  usageStatistics={false}
+/>
+```
 
-| Name | Description |
-| --- | --- |
-| [`@toast-ui/editor`](https://github.com/nhn/tui.editor/tree/master/apps/editor) | Plain JavaScript component |
+## 💾 Install
 
-### TOAST UI Editor's Wrappers
-
-| Name | Description |
-| --- | --- |
-| [`@toast-ui/react-editor`](https://github.com/nhn/tui.editor/tree/master/apps/react-editor) | [React](https://reactjs.org/) wrapper component |
-| [`@toast-ui/vue-editor`](https://github.com/nhn/tui.editor/tree/master/apps/vue-editor) | [Vue](https://vuejs.org/) wrapper component |
-
-### TOAST UI Editor's Plugins
-
-| Name | Description |
-| --- | --- |
-| [`@toast-ui/editor-plugin-chart`](https://github.com/nhn/tui.editor/tree/master/plugins/chart) | Plugin to render chart |
-| [`@toast-ui/editor-plugin-code-syntax-highlight`](https://github.com/nhn/tui.editor/tree/master/plugins/code-syntax-highlight) | Plugin to highlight code syntax |
-| [`@toast-ui/editor-plugin-color-syntax`](https://github.com/nhn/tui.editor/tree/master/plugins/color-syntax) | Plugin to color editing text |
-| [`@toast-ui/editor-plugin-table-merged-cell`](https://github.com/nhn/tui.editor/tree/master/plugins/table-merged-cell) | Plugin to merge table columns |
-| [`@toast-ui/editor-plugin-uml`](https://github.com/nhn/tui.editor/tree/master/plugins/uml) | Plugin to render UML |
-
-
-## 🤖 Why TOAST UI Editor?
-
-TOAST UI Editor provides **Markdown mode** and **WYSIWYG mode**. Depending on the type of use you want like production of *Markdown* or maybe to just edit the *Markdown*. The TOAST UI Editor can be helpful for both the usage. It offers **Markdown mode** and **WYSIWYG mode**, which can be switched any point in time.
-
-### Productive Markdown Mode
-
-![markdown](https://user-images.githubusercontent.com/37766175/121464762-71e2fc80-c9ef-11eb-9a0a-7b06e08d3ccb.png)
-
-**CommonMark + GFM Specifications**
-
-Today *CommonMark* is the de-facto *Markdown* standard. *GFM (GitHub Flavored Markdown)* is another popular specification based on *CommonMark* - maintained by *GitHub*, which is the *Markdown* mostly used. TOAST UI Editor follows both [*CommonMark*](http://commonmark.org/) and [*GFM*](https://github.github.com/gfm/) specifications. Write documents with ease using productive tools provided by TOAST UI Editor and you can easily open the produced document wherever the specifications are supported.
-
-* **Live Preview** : Edit Markdown while keeping an eye on the rendered HTML. Your edits will be applied immediately.
-* **Scroll Sync** : Synchronous scrolling between Markdown and Preview. You don't need to scroll through each one separately.
-* **Syntax Highlight** : You can check broken Markdown syntax immediately.
-
-### Easy WYSIWYG Mode
-
-![wysiwyg](https://user-images.githubusercontent.com/37766175/121808381-251f5000-cc93-11eb-8c47-4f5a809de2b3.png)
-
-* **Table** : Through the context menu of the table, you can add or delete columns or rows of the table, and you can also arrange text in cells.
-* **Custom Block Editor** : The custom block area can be edited through the internal editor.
-* **Copy and Paste** : Paste anything from browser, screenshot, excel, powerpoint, etc.
-
-### UI
-* **Toolbar** : Through the toolbar, you can style or add elements to the document you are editing.
-![UI](https://user-images.githubusercontent.com/37766175/121808231-767b0f80-cc92-11eb-82a0-433123746982.png)
-
-* **Dark Theme** : You can use the dark theme.
-![UI](https://user-images.githubusercontent.com/37766175/121808649-8136a400-cc94-11eb-8674-812e170ccab5.png)
-
-### Use of Various Extended Functions - Plugins
-
-![plugin](https://user-images.githubusercontent.com/37766175/121808323-d8d41000-cc92-11eb-9117-b92a435c9b43.png)
-
-CommonMark and GFM are great, but we often need more abstraction. The TOAST UI Editor comes with powerful **Plugins** in compliance with the Markdown syntax.
-
-**Five basic plugins** are provided as follows, and can be downloaded and used with npm.
-
-* [**`chart`**](https://github.com/nhn/tui.editor/tree/master/plugins/chart) : A code block marked as a 'chart' will render [TOAST UI Chart](https://github.com/nhn/tui.chart).
-* [**`code-syntax-highlight`**](https://github.com/nhn/tui.editor/tree/master/plugins/code-syntax-highlight) : Highlight the code block area corresponding to the language provided by [Prism.js](https://prismjs.com/).
-* [**`color-syntax`**](https://github.com/nhn/tui.editor/tree/master/plugins/color-syntax) : 
-Using [TOAST UI ColorPicker](https://github.com/nhn/tui.color-picker), you can change the color of the editing text with the GUI.
-* [**`table-merged-cell`**](https://github.com/nhn/tui.editor/tree/master/plugins/table-merged-cell) : 
-You can merge columns of the table header and body area.
-* [**`uml`**](https://github.com/nhn/tui.editor/tree/master/plugins/uml) : A code block marked as an 'uml' will render [UML diagrams](http://plantuml.com/screenshot).
-
-## 🎨 Features
-
-* [Viewer](https://github.com/nhn/tui.editor/tree/master/docs/en/viewer.md) : Supports a mode to display only markdown data without an editing area.
-* [Internationalization (i18n)](https://github.com/nhn/tui.editor/tree/master/docs/en/i18n.md) : Supports English, Dutch, Korean, Japanese, Chinese, Spanish, German, Russian, French, Ukrainian, Turkish, Finnish, Czech, Arabic, Polish, Galician, Swedish, Italian, Norwegian, Croatian + language and you can extend.
-* [Widget](https://github.com/nhn/tui.editor/tree/master/docs/en/widget.md) : This feature allows you to configure the rules that replaces the string matching to a specific `RegExp` with the widget node.
-* [Custom Block](https://github.com/nhn/tui.editor/tree/master/docs/en/custom-block.md) : Nodes not supported by Markdown can be defined through custom block. You can display the node what you want through writing the parsing logic with custom block.
-
-## 🐾 Examples
-
-* [Basic](https://nhn.github.io/tui.editor/latest/tutorial-example01-editor-basic)
-* [Viewer](https://nhn.github.io/tui.editor/latest/tutorial-example04-viewer)
-* [Using All Plugins](https://nhn.github.io/tui.editor/latest/tutorial-example12-editor-with-all-plugins)
-* [Creating the User's Plugin](https://nhn.github.io/tui.editor/latest/tutorial-example13-creating-plugin)
-* [Customizing the Toobar Buttons](https://nhn.github.io/tui.editor/latest/tutorial-example15-customizing-toolbar-buttons)
-* [Internationalization (i18n)](https://nhn.github.io/tui.editor/latest/tutorial-example16-i18n)
-
-Here are more [examples](https://nhn.github.io/tui.editor/latest/tutorial-example01-editor-basic) and play with TOAST UI Editor!
-
-
-## 🌏 Browser Support
-
-| <img src="https://user-images.githubusercontent.com/1215767/34348387-a2e64588-ea4d-11e7-8267-a43365103afe.png" alt="Chrome" width="16px" height="16px" /> Chrome | <img src="https://user-images.githubusercontent.com/1215767/34348590-250b3ca2-ea4f-11e7-9efb-da953359321f.png" alt="IE" width="16px" height="16px" /> Internet Explorer | <img src="https://user-images.githubusercontent.com/1215767/34348380-93e77ae8-ea4d-11e7-8696-9a989ddbbbf5.png" alt="Edge" width="16px" height="16px" /> Edge | <img src="https://user-images.githubusercontent.com/1215767/34348394-a981f892-ea4d-11e7-9156-d128d58386b9.png" alt="Safari" width="16px" height="16px" /> Safari | <img src="https://user-images.githubusercontent.com/1215767/34348383-9e7ed492-ea4d-11e7-910c-03b39d52f496.png" alt="Firefox" width="16px" height="16px" /> Firefox |
-| :---------: | :---------: | :---------: | :---------: | :---------: |
-| Yes | 11+ | Yes | Yes | Yes |
-
-
-## 🔧 Pull Request Steps
-
-TOAST UI products are open source, so you can create a pull request(PR) after you fix issues. Run npm scripts and develop yourself with the following process.
-
-### Setup
-
-Fork `main` branch into your personal repository. Clone it to local computer. Install node modules. Before starting development, you should check to haveany errors.
+### Using npm
 
 ```sh
-$ git clone https://github.com/{your-personal-repo}/tui.editor.git
-$ npm install
-$ npm run test editor
+npm install --save @toast-ui/react-editor
 ```
 
-> TOAST UI Editor uses [npm workspace](https://docs.npmjs.com/cli/v7/using-npm/workspaces/), so you need to set the environment based on [npm7](https://github.blog/2021-02-02-npm-7-is-now-generally-available/). If subversion is used, dependencies must be installed by moving direct paths per package.
+## 📝 Usage
 
-### Develop
+### Import
 
-You can see your code is reflected as soon as you saving the codes by running a server. Don't miss adding test cases and then make green rights.
+You can use TOAST UI Editor for React as a ECMAScript module or a CommonJS module. As this module does not contain CSS files, you should import `toastui-editor.css` from `@toast-ui/editor` in the script.
 
-#### Run snowpack-dev-server
-[snowpack](https://www.snowpack.dev/) allows you to run a development server without bundling.
+- ES Modules
 
-``` sh
-$ npm run serve editor
+```js
+import '@toast-ui/editor/dist/toastui-editor.css';
+
+import { Editor } from '@toast-ui/react-editor';
 ```
 
-#### Run webpack-dev-server
-If testing of legacy browsers is required, the development server can still be run using a [webpack](https://webpack.js.org/).
+- CommonJS
 
-``` sh
-$ npm run serve:ie editor
+```js
+require('@toast-ui/editor/dist/toastui-editor.css');
+
+const { Editor } = require('@toast-ui/react-editor');
 ```
 
-#### Run test
+### Props
 
-``` sh
-$ npm test editor
+[All the options of the TOAST UI Editor](https://nhn.github.io/tui.editor/latest/ToastUIEditor) are supported in the form of props.
+
+```js
+import '@toast-ui/editor/dist/toastui-editor.css';
+
+import { Editor } from '@toast-ui/react-editor';
+
+const MyComponent = () => (
+  <Editor
+    initialValue="hello react editor world!"
+    previewStyle="vertical"
+    height="600px"
+    initialEditType="markdown"
+    useCommandShortcut={true}
+  />
+);
 ```
 
-### Pull Request
+### Instance Methods
 
-Before creating a PR, test and check for any errors. If there are no errors, then commit and push.
+For using [instance methods of TOAST UI Editor](https://nhn.github.io/tui.editor/latest/ToastUIEditor#addHook), first thing to do is creating Refs of wrapper component using [`createRef()`](https://reactjs.org/docs/refs-and-the-dom.html#creating-refs). But the wrapper component does not provide a way to call instance methods of TOAST UI Editor directly. Instead, you can call `getInstance()` method of the wrapper component to get the instance, and call the methods on it.
 
-For more information, please refer to the Contributing section.
+```js
+import '@toast-ui/editor/dist/toastui-editor.css';
 
-## 💬 Contributing
+import { Editor } from '@toast-ui/react-editor';
 
-* [Code of Conduct](https://github.com/nhn/tui.editor/blob/master/CODE_OF_CONDUCT.md)
-* [Contributing Guideline](https://github.com/nhn/tui.editor/blob/master/CONTRIBUTING.md)
-* [Commit Convention](https://github.com/nhn/tui.editor/blob/master/docs/COMMIT_MESSAGE_CONVENTION.md)
-* [Issue Guidelines](https://github.com/nhn/tui.editor/tree/master/.github/ISSUE_TEMPLATE)
+class MyComponent extends React.Component {
+  editorRef = React.createRef();
 
+  handleClick = () => {
+    this.editorRef.current.getInstance().exec('Bold');
+  };
 
-## 🍞 TOAST UI Family
+  render() {
+    return (
+      <>
+        <Editor
+          previewStyle="vertical"
+          height="400px"
+          initialEditType="markdown"
+          initialValue="hello"
+          ref={this.editorRef}
+        />
+        <button onClick={this.handleClick}>make bold</button>
+      </>
+    );
+  }
+}
+```
 
-- [TOAST UI Calendar](https://github.com/nhn/tui.calendar)
-- [TOAST UI Chart](https://github.com/nhn/tui.chart)
-- [TOAST UI Grid](https://github.com/nhn/tui.grid)
-- [TOAST UI Image Editor](https://github.com/nhn/tui.image-editor)
-- [TOAST UI Components](https://github.com/nhn)
+#### Getting the Root Element
 
+An instance of the wrapper component also provides a handy method for getting the root element. If you want to manipulate the root element directly, you can call `getRootElement` to get the element.
 
-## 🚀 Used By
+```js
+import '@toast-ui/editor/dist/toastui-editor.css';
 
-* [TOAST Dooray! - Collaboration Service (Project, Messenger, Mail, Calendar, Drive, Wiki, Contacts)](https://dooray.com)
-* [UNOTES - Visual Studio Code Extension](https://marketplace.visualstudio.com/items?itemName=ryanmcalister.Unotes)
+import { Editor } from '@toast-ui/react-editor';
 
+class MyComponent extends React.Component {
+  editorRef = React.createRef();
 
-## 📜 License
+  handleClickButton = () => {
+    this.editorRef.current.getRootElement().classList.add('my-editor-root');
+  };
 
-This software is licensed under the [MIT](https://github.com/nhn/tui.editor/blob/master/LICENSE) © [NHN](https://github.com/nhn).
+  render() {
+    return (
+      <>
+        <Editor
+          previewStyle="vertical"
+          height="400px"
+          initialEditType="markdown"
+          initialValue="hello"
+          ref={this.editorRef}
+        />
+        <button onClick={this.handleClickButton}>Click!</button>
+      </>
+    );
+  }
+}
+```
+
+### Events
+
+[All the events of TOAST UI Editor](https://nhn.github.io/tui.editor/latest/ToastUIEditor#focus) are supported in the form of `on[EventName]` props. The first letter of each event name should be capitalized. For example, for using `focus` event you can use `onFocus` prop like the example below.
+
+```js
+import '@toast-ui/editor/dist/toastui-editor.css';
+
+import { Editor } from '@toast-ui/react-editor';
+
+class MyComponent extends React.Component {
+  handleFocus = () => {
+    console.log('focus!!');
+  };
+
+  render() {
+    return (
+      <Editor
+        previewStyle="vertical"
+        height="400px"
+        initialEditType="markdown"
+        initialValue="hello"
+        ref={this.editorRef}
+        onFocus={this.handleFocus}
+      />
+    );
+  }
+}
+```

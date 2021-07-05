@@ -1,16 +1,9 @@
 {
+  "extends": "../../tsconfig.json",
+  "include": ["src/**/*.ts", "src/**/*.tsx", "index.d.ts"],
+  "exclude": ["node_modules"],
   "compilerOptions": {
-    "skipLibCheck": true,
-    "target": "es5",
-    "module": "es6",
-    "allowJs": true,
-    "strict": true,
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "importHelpers": true,
-    "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
-    "baseUrl": ".",
-    "noEmit": true,
+    "jsx": "react",
+    "lib": ["esnext", "dom", "dom.iterable"]
   }
 }
