@@ -1,4 +1,4 @@
-// Type definitions for TOAST UI Editor v3.0.0
+// Type definitions for TOAST UI Editor v3.1.7
 // TypeScript Version: 4.2.3
 import {
   EditorCore,
@@ -18,7 +18,11 @@ import {
   WidgetRule,
   PluginContext,
   I18n,
+  CustomHTMLRenderer,
+  HTMLMdNodeConvertor,
+  HTMLMdNodeConvertorMap,
 } from './editor';
+import './toastui-editor-viewer';
 
 export {
   MdNode,
@@ -32,7 +36,7 @@ export {
   ListData,
   HeadingMdNode,
   CodeMdNode,
-  HTMLConvertorMap as ToHTMLConvertorMap,
+  HTMLConvertorMap,
 } from './toastmark';
 export { ToMdConvertorMap } from './convertor';
 export { Emitter, Handler } from './event';
@@ -51,13 +55,16 @@ export {
   WidgetRule,
   PluginContext,
   I18n,
+  CustomHTMLRenderer,
+  HTMLMdNodeConvertor,
+  HTMLMdNodeConvertorMap,
 };
 export { Dispatch } from './spec';
 export { PluginInfo, PluginNodeViews, CommandFn, PluginCommandMap } from './plugin';
-export { MdLikeNode } from './markdown';
-export { Editor, EditorCore };
+export { MdLikeNode, HTMLMdNode } from './markdown';
+export { Editor, EditorCore, Viewer };
 export default Editor;
 
 export declare namespace toastui {
-  export { EditorCore, Editor, Viewer };
+  export { Editor };
 }

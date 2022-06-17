@@ -1,6 +1,6 @@
 import React from 'react';
-import Editor from '@toast-ui/editor';
-import { EditorProps, EventNames } from '../index';
+import Editor, { EventMap } from '@toast-ui/editor';
+import type { EditorProps, EventNames } from '../index';
 
 export default class extends React.Component<EditorProps> {
   rootEl = React.createRef<HTMLDivElement>();
@@ -15,24 +15,40 @@ export default class extends React.Component<EditorProps> {
     return this.editorInst;
   }
 
-  bindEventHandlers(props: EditorProps) {
-    Object.keys(this.props)
+  getBindingEventNames() {
+    return Object.keys(this.props)
       .filter((key) => /^on[A-Z][a-zA-Z]+/.test(key))
-      .forEach((key) => {
-        const eventName = key[2].toLowerCase() + key.slice(3);
+      .filter((key) => this.props[key as EventNames]);
+  }
 
-        this.editorInst.off(eventName);
-        this.editorInst.on(eventName, props[key as EventNames]!);
-      });
+  bindEventHandlers(props: EditorProps) {
+    this.getBindingEventNames().forEach((key) => {
+      const eventName = key[2].toLowerCase() + key.slice(3);
+
+      this.editorInst.off(eventName);
+      this.editorInst.on(eventName, props[key as EventNames]!);
+    });
+  }
+
+  getInitEvents() {
+    return this.getBindingEventNames().reduce(
+      (acc: Record<string, EventMap[keyof EventMap]>, key) => {
+        const eventName = (key[2].toLowerCase() + key.slice(3)) as keyof EventMap;
+
+        acc[eventName] = this.props[key as EventNames];
+
+        return acc;
+      },
+      {}
+    );
   }
 
   componentDidMount() {
     this.editorInst = new Editor({
       el: this.rootEl.current!,
       ...this.props,
+      events: this.getInitEvents(),
     });
-
-    this.bindEventHandlers(this.props);
   }
 
   shouldComponentUpdate(nextProps: EditorProps) {

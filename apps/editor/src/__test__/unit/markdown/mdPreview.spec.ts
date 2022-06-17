@@ -9,6 +9,8 @@ function getHTML(preview: MarkdownPreview) {
   return removeDataAttr(preview.getHTML());
 }
 
+jest.useFakeTimers();
+
 describe('Preview', () => {
   let eventEmitter: EventEmitter, preview: MarkdownPreview;
 
@@ -104,6 +106,7 @@ describe('preview highlight', () => {
   }
 
   afterEach(() => {
+    jest.clearAllTimers();
     document.body.removeChild(editorEl);
     editor.destroy();
     preview.destroy();
@@ -203,6 +206,9 @@ describe('preview highlight', () => {
     setMarkdown('# Heading');
     setCursor([1, 1]);
 
+    // run setTimeout function when focusing the editor
+    jest.runAllTimers();
+
     expect(getHighlightedCount()).toBe(1);
 
     blur();
@@ -243,7 +249,7 @@ describe('Preview with html renderer', () => {
     eventEmitter.emit('updatePreview', editResult);
 
     expect(getHTML(preview)).toBe(
-      '<iframe width="420" height="315" src="https://www.youtube.com/embed/XyenY12fzAk"></iframe>'
+      '<iframe src="https://www.youtube.com/embed/XyenY12fzAk" height="315" width="420"></iframe>'
     );
   });
 

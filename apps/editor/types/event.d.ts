@@ -12,6 +12,7 @@ export interface Emitter {
   addEventType(type: string): void;
   removeEventHandler(type: string, handler?: Handler): void;
   getEvents(): Mapable<string, Handler[] | undefined>;
+  holdEventInvoke(fn: Function): void;
 }
 
 export interface EmitterConstructor {
@@ -36,6 +37,8 @@ export type EventTypes =
   | 'toggleScrollSync'
   | 'mixinTableOffsetMapPrototype'
   | 'setFocusedNode'
+  | 'removePopupWidget'
+  | 'query'
   // provide event for user
   | 'openPopup'
   | 'closePopup'
@@ -43,6 +46,7 @@ export type EventTypes =
   | 'beforePreviewRender'
   | 'beforeConvertWysiwygToMarkdown'
   | 'load'
+  | 'loadUI'
   | 'change'
   | 'caretChange'
   | 'destroy'

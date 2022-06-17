@@ -281,7 +281,7 @@ describe('addImage command', () => {
       imageUrl: 'https://picsum.photos/200',
     });
 
-    expect(getTextContent(mde)).toBe('![mytext \\(\\)\\[\\]\\<\\>](https://picsum.photos/200)');
+    expect(getTextContent(mde)).toBe('![mytext ()\\[\\]<>](https://picsum.photos/200)');
   });
 
   it('should encode image url', () => {
@@ -290,7 +290,18 @@ describe('addImage command', () => {
       imageUrl: 'myurl ()[]<>',
     });
 
-    expect(getTextContent(mde)).toBe('![image](myurl%20%28%29%5B%5D%3C%3E)');
+    expect(getTextContent(mde)).toBe('![image](myurl ()[]<>)');
+  });
+
+  it('should not decode url which is already encoded', () => {
+    cmd.exec('addImage', {
+      altText: 'image',
+      imageUrl: 'https://firebasestorage.googleapis.com/images%2Fimage.png?alt=media',
+    });
+
+    expect(getTextContent(mde)).toBe(
+      '![image](https://firebasestorage.googleapis.com/images%2Fimage.png?alt=media)'
+    );
   });
 });
 
@@ -307,16 +318,18 @@ describe('addLink command', () => {
       linkUrl: 'https://ui.toast.com',
     });
 
-    expect(getTextContent(mde)).toBe('[mytext \\(\\)\\[\\]\\<\\>](https://ui.toast.com)');
+    expect(getTextContent(mde)).toBe('[mytext ()\\[\\]<>](https://ui.toast.com)');
   });
 
-  it('should encode link url', () => {
+  it('should not decode url which is already encoded', () => {
     cmd.exec('addLink', {
       linkText: 'TOAST UI',
-      linkUrl: 'myurl ()[]<>',
+      linkUrl: 'https://firebasestorage.googleapis.com/links%2Fimage.png?alt=media',
     });
 
-    expect(getTextContent(mde)).toBe('[TOAST UI](myurl%20%28%29%5B%5D%3C%3E)');
+    expect(getTextContent(mde)).toBe(
+      '[TOAST UI](https://firebasestorage.googleapis.com/links%2Fimage.png?alt=media)'
+    );
   });
 });
 
@@ -512,6 +525,15 @@ describe('bulletList command', () => {
     execUndo();
 
     expect(getPreviewHTML()).toBe(result);
+  });
+
+  it('should add bullet list syntax to empty line after heading node', () => {
+    mde.setMarkdown('# heading\n');
+
+    mde.setSelection([2, 1], [2, 1]);
+    cmd.exec('bulletList');
+
+    expect(getTextContent(mde)).toBe('# heading\n* ');
   });
 });
 
@@ -709,6 +731,15 @@ describe('orderedList command', () => {
     execUndo();
 
     expect(getPreviewHTML()).toBe(result);
+  });
+
+  it('should add ordered list syntax to empty line after heading node', () => {
+    mde.setMarkdown('# heading\n');
+
+    mde.setSelection([2, 1], [2, 1]);
+    cmd.exec('orderedList');
+
+    expect(getTextContent(mde)).toBe('# heading\n1. ');
   });
 });
 
@@ -1160,5 +1191,34 @@ describe('outdent command', () => {
 
       expect(getTextContent(mde)).toBe(result);
     });
+  });
+});
+
+describe('customBlock command', () => {
+  it('should add custom block syntax', () => {
+    const result = source`
+      $$myCustom
+
+      $$
+    `;
+
+    cmd.exec('customBlock', { info: 'myCustom' });
+
+    expect(getTextContent(mde)).toBe(result);
+  });
+
+  it('should wrap the selection with custom block syntax', () => {
+    const result = source`
+      $$myCustom
+      console.log('customBlock');
+      $$
+    `;
+
+    mde.setMarkdown(`console.log('customBlock');`);
+
+    cmd.exec('selectAll');
+    cmd.exec('customBlock', { info: 'myCustom' });
+
+    expect(getTextContent(mde)).toBe(result);
   });
 });

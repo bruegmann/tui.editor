@@ -1,11 +1,12 @@
 import ColorPicker from 'tui-color-picker';
-
 import type { Context } from '@toast-ui/toastmark';
-import type { PluginContext, PluginInfo, MdLikeNode } from '@toast-ui/editor';
+import type { PluginContext, PluginInfo, HTMLMdNode, I18n } from '@toast-ui/editor';
 import type { Transaction, Selection, TextSelection } from 'prosemirror-state';
 import { PluginOptions } from '@t/index';
+import { addLangs } from './i18n/langs';
 
 import './css/plugin.css';
+import { findParentByClassName } from './utils/dom';
 
 const PREFIX = 'toastui-editor-';
 
@@ -18,10 +19,10 @@ function createApplyButton(text: string) {
   return button;
 }
 
-function createToolbarItemOption(colorPickerContainer: HTMLDivElement) {
+function createToolbarItemOption(colorPickerContainer: HTMLDivElement, i18n: I18n) {
   return {
     name: 'color',
-    tooltip: 'Text color',
+    tooltip: i18n.get('Text color'),
     className: `${PREFIX}toolbar-icons color`,
     popup: {
       className: `${PREFIX}popup-color`,
@@ -48,12 +49,19 @@ function createSelection(
     : SelectionClass.create(doc, mappedFrom, mappedTo);
 }
 
+function getCurrentEditorEl(colorPickerEl: HTMLElement, containerClassName: string) {
+  const editorDefaultEl = findParentByClassName(colorPickerEl, `${PREFIX}defaultUI`)!;
+
+  return editorDefaultEl.querySelector<HTMLElement>(`.${containerClassName} .ProseMirror`)!;
+}
+
 interface ColorPickerOption {
   container: HTMLDivElement;
   preset?: Array<string>;
   usageStatistics: boolean;
 }
 
+let containerClassName: string;
 let currentEditorEl: HTMLElement;
 
 // @TODO: add custom syntax for plugin
@@ -73,6 +81,8 @@ export default function colorSyntaxPlugin(
   const container = document.createElement('div');
   const colorPickerOption: ColorPickerOption = { container, usageStatistics };
 
+  addLangs(i18n);
+
   if (preset) {
     colorPickerOption.preset = preset;
   }
@@ -81,14 +91,14 @@ export default function colorSyntaxPlugin(
   const button = createApplyButton(i18n.get('OK'));
 
   eventEmitter.listen('focus', (editType) => {
-    const containerClassName = `${PREFIX}${editType === 'markdown' ? 'md' : 'ww'}-container`;
-
-    currentEditorEl = document.querySelector<HTMLElement>(`.${containerClassName} .ProseMirror`)!;
+    containerClassName = `${PREFIX}${editType === 'markdown' ? 'md' : 'ww'}-container`;
   });
 
   container.addEventListener('click', (ev) => {
     if ((ev.target as HTMLElement).getAttribute('type') === 'button') {
       const selectedColor = colorPicker.getColor();
+
+      currentEditorEl = getCurrentEditorEl(container, containerClassName);
 
       eventEmitter.emit('command', 'color', { selectedColor });
       eventEmitter.emit('closePopup');
@@ -100,7 +110,7 @@ export default function colorSyntaxPlugin(
   colorPicker.slider.toggle(true);
   container.appendChild(button);
 
-  const toolbarItem = createToolbarItemOption(container);
+  const toolbarItem = createToolbarItemOption(container, i18n);
 
   return {
     markdownCommands: {
@@ -147,10 +157,9 @@ export default function colorSyntaxPlugin(
     ],
     toHTMLRenderers: {
       htmlInline: {
-        // @ts-expect-error
-        span(node: MdLikeNode, { entering }: Context) {
+        span(node: HTMLMdNode, { entering }: Context) {
           return entering
-            ? { type: 'openTag', tagName: 'span', attributes: node.attrs }
+            ? { type: 'openTag', tagName: 'span', attributes: node.attrs! }
             : { type: 'closeTag', tagName: 'span' };
         },
       },

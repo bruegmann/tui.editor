@@ -4,7 +4,7 @@ import isUndefined from 'tui-code-snippet/type/isUndefined';
 
 import { nodeTypeWriters, write } from './toMdNodeTypeWriters';
 
-import { repeat, escape, quote } from '@/utils/common';
+import { repeat, quote, escapeXml, escapeTextForLink } from '@/utils/common';
 
 import {
   ToMdConvertorMap,
@@ -167,14 +167,14 @@ export const toMdConvertors: ToMdConvertorMap = {
 
   image({ node }) {
     const { attrs } = node;
-    const altText = escape(attrs.altText || '');
-    const imageUrl = escape(attrs.imageUrl);
-    const altAttr = altText ? ` alt="${altText}"` : '';
+    const { rawHTML, altText } = attrs;
+    const imageUrl = attrs.imageUrl.replace(/&amp;/g, '&');
+    const altAttr = altText ? ` alt="${escapeXml(altText)}"` : '';
 
     return {
-      rawHTML: attrs.rawHTML ? `<${attrs.rawHTML} src="${imageUrl}"${altAttr}>` : null,
+      rawHTML: rawHTML ? `<${rawHTML} src="${escapeXml(imageUrl)}"${altAttr}>` : null,
       attrs: {
-        altText,
+        altText: escapeTextForLink(altText || ''),
         imageUrl,
       },
     };
@@ -237,20 +237,19 @@ export const toMdConvertors: ToMdConvertorMap = {
 
   link({ node }, { entering }) {
     const { attrs } = node;
-    const linkUrl = escape(attrs.linkUrl);
-    const { rawHTML } = attrs;
+    const { title, rawHTML } = attrs;
+    const linkUrl = attrs.linkUrl.replace(/&amp;/g, '&');
+    const titleAttr = title ? ` title="${escapeXml(title)}"` : '';
 
     if (entering) {
       return {
         delim: '[',
-        rawHTML: rawHTML ? `<${rawHTML} href="${linkUrl}">` : null,
+        rawHTML: rawHTML ? `<${rawHTML} href="${escapeXml(linkUrl)}"${titleAttr}>` : null,
       };
     }
 
-    const linkText = attrs.title ? ` ${quote(attrs.linkText)}` : '';
-
     return {
-      delim: `](${linkText}${linkUrl})`,
+      delim: `](${linkUrl}${title ? ` ${quote(escapeTextForLink(title))}` : ''})`,
       rawHTML: getCloseRawHTML(rawHTML),
     };
   },
@@ -269,6 +268,12 @@ export const toMdConvertors: ToMdConvertorMap = {
     };
   },
 
+  htmlComment({ node }) {
+    return {
+      text: (node as ProsemirrorNode).textContent,
+    };
+  },
+
   // html inline node, html block node
   html({ node }, { entering }) {
     const tagName = node.type.name;
@@ -277,7 +282,8 @@ export const toMdConvertors: ToMdConvertorMap = {
     const closeTag = `</${tagName}>`;
 
     Object.keys(attrs).forEach((attrName) => {
-      openTag += ` ${attrName}="${attrs[attrName]}"`;
+      // To prevent broken converting when attributes has double quote string
+      openTag += ` ${attrName}="${attrs[attrName].replace(/"/g, "'")}"`;
     });
     openTag += '>';
 

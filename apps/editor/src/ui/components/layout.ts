@@ -63,9 +63,9 @@ export class Layout extends Component<Props, State> {
     const { eventEmitter, hideModeSwitch, toolbarItems, theme } = this.props;
     const { hide, previewStyle, editorType } = this.state;
     const displayClassName = hide ? ' hidden' : '';
-    const editorTypeClassName = editorType === 'markdown' ? cls('md-mode') : cls('ww-mode');
+    const editorTypeClassName = cls(editorType === 'markdown' ? 'md-mode' : 'ww-mode');
     const previewClassName = `${cls('md')}-${previewStyle}-style`;
-    const themeClassName = theme === 'light' ? '' : `${cls(theme)} `;
+    const themeClassName = cls([theme !== 'light', `${theme} `]);
 
     return html`
       <div
@@ -83,16 +83,18 @@ export class Layout extends Component<Props, State> {
           class="${cls('main')} ${editorTypeClassName}"
           ref=${(el: HTMLElement) => (this.refs.editorSection = el)}
         >
-          <div
-            class="${cls('md-container')} ${previewClassName}"
-            ref=${(el: HTMLElement) => (this.refs.mdContainer = el)}
-          >
-            <div class="${cls('md-splitter')}"></div>
+          <div class="${cls('main-container')}">
+            <div
+              class="${cls('md-container')} ${previewClassName}"
+              ref=${(el: HTMLElement) => (this.refs.mdContainer = el)}
+            >
+              <div class="${cls('md-splitter')}"></div>
+            </div>
+            <div
+              class="${cls('ww-container')}"
+              ref=${(el: HTMLElement) => (this.refs.wwContainer = el)}
+            />
           </div>
-          <div
-            class="${cls('ww-container')}"
-            ref=${(el: HTMLElement) => (this.refs.wwContainer = el)}
-          />
         </div>
         ${!hideModeSwitch &&
         html`<${Switch} eventEmitter=${eventEmitter} editorType=${editorType} />`}

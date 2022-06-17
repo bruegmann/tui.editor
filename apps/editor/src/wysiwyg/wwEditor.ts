@@ -1,6 +1,7 @@
 import { EditorView, NodeView } from 'prosemirror-view';
 import { Node as ProsemirrorNode, Slice, Fragment, Mark, Schema } from 'prosemirror-model';
 import isNumber from 'tui-code-snippet/type/isNumber';
+import toArray from 'tui-code-snippet/collection/toArray';
 
 import EditorBase from '@/base';
 import { getWwCommands } from '@/commands/wwCommands';
@@ -11,7 +12,7 @@ import { emitImageBlobHook, pasteImageOnly } from '@/helper/image';
 import { tableSelection } from './plugins/selection/tableSelection';
 import { tableContextMenu } from './plugins/tableContextMenu';
 import { task } from './plugins/task';
-import { toolbarState } from './plugins/toolbarState';
+import { toolbarStateHighlight } from './plugins/toolbarState';
 
 import { CustomBlockView } from './nodeview/customBlockView';
 import { ImageView } from './nodeview/imageView';
@@ -24,11 +25,12 @@ import { createSpecs } from './specCreator';
 import { Emitter } from '@t/event';
 import { ToDOMAdaptor } from '@t/convertor';
 import { HTMLSchemaMap, LinkAttributes, WidgetStyle } from '@t/editor';
+import { NodeViewPropMap, PluginProp } from '@t/plugin';
 import { createNodesWithWidget } from '@/widget/rules';
 import { widgetNodeView } from '@/widget/widgetNode';
 import { cls } from '@/utils/dom';
 import { includes } from '@/utils/common';
-import { NodeViewPropMap, PluginProp } from '@t/plugin';
+import { isInTableNode } from '@/wysiwyg/helper/node';
 
 interface WindowWithClipboard extends Window {
   clipboardData?: DataTransfer | null;
@@ -105,13 +107,13 @@ export default class WysiwygEditor extends EditorBase {
   }
 
   createPlugins() {
-    return this.defaultPlugins.concat([
+    return [
       tableSelection(),
       tableContextMenu(this.eventEmitter),
       task(),
-      toolbarState(this.eventEmitter),
+      toolbarStateHighlight(this.eventEmitter),
       ...this.createPluginProps(),
-    ]);
+    ].concat(this.defaultPlugins);
   }
 
   createPluginNodeViews() {
@@ -157,7 +159,8 @@ export default class WysiwygEditor extends EditorBase {
         this.eventEmitter.emit('setFocusedNode', state.selection.$from.node(1));
       },
       transformPastedHTML: changePastedHTML,
-      transformPasted: (slice: Slice) => changePastedSlice(slice, this.schema),
+      transformPasted: (slice: Slice) =>
+        changePastedSlice(slice, this.schema, isInTableNode(this.view.state.selection.$from)),
       handlePaste: (view: EditorView, _: ClipboardEvent, slice: Slice) => pasteToTable(view, slice),
       handleKeyDown: (_, ev) => {
         this.eventEmitter.emit('keydown', this.editorType, ev);
@@ -167,15 +170,22 @@ export default class WysiwygEditor extends EditorBase {
         paste: (_, ev) => {
           const clipboardData =
             (ev as ClipboardEvent).clipboardData || (window as WindowWithClipboard).clipboardData;
-          const items = clipboardData && clipboardData.items;
+          const items = clipboardData?.items;
 
           if (items) {
-            const imageBlob = pasteImageOnly(items);
+            const containRtfItem = toArray(items).some(
+              (item) => item.kind === 'string' && item.type === 'text/rtf'
+            );
 
-            if (imageBlob) {
-              ev.preventDefault();
+            // if it contains rtf, it's most likely copy paste from office -> no image
+            if (!containRtfItem) {
+              const imageBlob = pasteImageOnly(items);
 
-              emitImageBlobHook(this.eventEmitter, imageBlob, ev.type);
+              if (imageBlob) {
+                ev.preventDefault();
+
+                emitImageBlobHook(this.eventEmitter, imageBlob, ev.type);
+              }
             }
           }
           return false;
@@ -255,7 +265,7 @@ export default class WysiwygEditor extends EditorBase {
     this.view.dispatch(tr.replaceWith(0, doc.content.size, newDoc));
 
     if (cursorToEnd) {
-      this.moveCursorToEnd();
+      this.moveCursorToEnd(true);
     }
   }
 

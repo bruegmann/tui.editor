@@ -1,12 +1,22 @@
 import { Schema, NodeSpec, MarkSpec, Fragment } from 'prosemirror-model';
 import { EditorView, Decoration, DecorationSet } from 'prosemirror-view';
-import { EditorState, Plugin, Selection, TextSelection } from 'prosemirror-state';
-import { HTMLConvertorMap, MdPos, Sourcepos } from './toastmark';
+import { EditorState, Plugin, PluginKey, Selection, TextSelection } from 'prosemirror-state';
+import { undoInputRule, InputRule, inputRules } from 'prosemirror-inputrules';
+
+import {
+  HTMLConvertor,
+  MdPos,
+  Sourcepos,
+  Context as MdContext,
+  HTMLToken,
+  HTMLConvertorMap,
+} from './toastmark';
 import { Emitter, Handler } from './event';
 import { Context, EditorAllCommandMap, EditorCommandFn, SpecManager } from './spec';
 import { ToMdConvertorMap } from './convertor';
 import { ToolbarItemOptions, IndexList } from './ui';
 import { CommandFn, PluginInfo } from './plugin';
+import { HTMLMdNode } from './markdown';
 
 export type PreviewStyle = 'tab' | 'vertical';
 export type EditorType = 'markdown' | 'wysiwyg';
@@ -53,6 +63,16 @@ export type LinkAttributes = Partial<Record<LinkAttributeNames, string>>;
 
 export type Sanitizer = (content: string) => string;
 
+export type HTMLMdNodeConvertor = (
+  node: HTMLMdNode,
+  context: MdContext,
+  convertors?: HTMLConvertorMap
+) => HTMLToken | HTMLToken[] | null;
+
+export type HTMLMdNodeConvertorMap = Record<string, HTMLMdNodeConvertor>;
+
+export type CustomHTMLRenderer = Partial<Record<string, HTMLConvertor | HTMLMdNodeConvertorMap>>;
+
 export interface ViewerOptions {
   el: HTMLElement;
   initialValue?: string;
@@ -60,7 +80,7 @@ export interface ViewerOptions {
   plugins?: EditorPlugin[];
   extendedAutolinks?: ExtendedAutolinks;
   linkAttributes?: LinkAttributes;
-  customHTMLRenderer?: HTMLConvertorMap;
+  customHTMLRenderer?: CustomHTMLRenderer;
   referenceDefinition?: boolean;
   customHTMLSanitizer?: Sanitizer;
   frontMatter?: boolean;
@@ -104,11 +124,17 @@ export interface PluginContext {
   i18n: I18n;
   pmState: {
     Plugin: typeof Plugin;
+    PluginKey: typeof PluginKey;
     Selection: typeof Selection;
     TextSelection: typeof TextSelection;
   };
   pmView: { Decoration: typeof Decoration; DecorationSet: typeof DecorationSet };
   pmModel: { Fragment: typeof Fragment };
+  pmRules: {
+    inputRules: typeof inputRules;
+    InputRule: typeof InputRule;
+    undoInputRule: typeof undoInputRule;
+  };
 }
 
 export type PluginFn = (context: PluginContext, options?: any) => PluginInfo | null;
@@ -126,13 +152,13 @@ export interface EditorOptions {
   language?: string;
   useCommandShortcut?: boolean;
   usageStatistics?: boolean;
-  toolbarItems?: (string | ToolbarItemOptions)[];
+  toolbarItems?: (string | ToolbarItemOptions)[][];
   hideModeSwitch?: boolean;
   plugins?: EditorPlugin[];
   extendedAutolinks?: ExtendedAutolinks;
   placeholder?: string;
   linkAttributes?: LinkAttributes;
-  customHTMLRenderer?: HTMLConvertorMap;
+  customHTMLRenderer?: CustomHTMLRenderer;
   customMarkdownRenderer?: ToMdConvertorMap;
   referenceDefinition?: boolean;
   customHTMLSanitizer?: Sanitizer;
@@ -140,6 +166,8 @@ export interface EditorOptions {
   frontMatter?: boolean;
   widgetRules?: WidgetRule[];
   theme?: string;
+  autofocus?: boolean;
+  viewer?: boolean;
 }
 
 interface Slots {
@@ -175,9 +203,9 @@ export class EditorCore {
 
   blur(): void;
 
-  moveCursorToEnd(): void;
+  moveCursorToEnd(focus?: boolean): void;
 
-  moveCursorToStart(): void;
+  moveCursorToStart(focus?: boolean): void;
 
   setMarkdown(markdown: string, cursorToEnd?: boolean): void;
 
@@ -294,9 +322,9 @@ export interface Base {
 
   destroy(): void;
 
-  moveCursorToStart(): void;
+  moveCursorToStart(focus: boolean): void;
 
-  moveCursorToEnd(): void;
+  moveCursorToEnd(focus: boolean): void;
 
   setScrollTop(top: number): void;
 

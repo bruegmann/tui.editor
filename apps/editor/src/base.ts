@@ -44,6 +44,8 @@ export default abstract class EditorBase implements Base {
 
   extraPlugins!: PluginProp[];
 
+  timer: NodeJS.Timeout | null = null;
+
   constructor(eventEmitter: Emitter) {
     this.el = document.createElement('div');
     this.el.className = 'toastui-editor';
@@ -80,13 +82,11 @@ export default abstract class EditorBase implements Base {
   }
 
   get defaultPlugins() {
-    const { undo, redo } = getDefaultCommands();
     const rules = this.createInputRules();
     const plugins = [
       ...this.keymaps,
       keymap({
-        'Mod-z': undo(),
-        'Shift-Mod-z': redo(),
+        'Shift-Enter': baseKeymap.Enter,
         ...baseKeymap,
       }),
       history(),
@@ -130,6 +130,13 @@ export default abstract class EditorBase implements Base {
     return rules.length ? inputRules({ rules }) : null;
   }
 
+  private clearTimer() {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
+  }
+
   createSchema() {
     return new Schema({
       nodes: this.specs.nodes,
@@ -138,7 +145,14 @@ export default abstract class EditorBase implements Base {
   }
 
   createKeymaps(useCommandShortcut: boolean) {
-    return useCommandShortcut ? this.specs.keymaps() : [];
+    const { undo, redo } = getDefaultCommands();
+    const allKeymaps = this.specs.keymaps(useCommandShortcut);
+    const historyKeymap = {
+      'Mod-z': undo(),
+      'Shift-Mod-z': redo(),
+    };
+
+    return useCommandShortcut ? allKeymaps.concat(keymap(historyKeymap)) : allKeymaps;
   }
 
   createCommands() {
@@ -150,8 +164,9 @@ export default abstract class EditorBase implements Base {
   }
 
   focus() {
+    this.clearTimer();
     // prevent the error for IE11
-    setTimeout(() => {
+    this.timer = setTimeout(() => {
       this.view.focus();
       this.view.dispatch(this.view.state.tr.scrollIntoView());
     });
@@ -162,27 +177,32 @@ export default abstract class EditorBase implements Base {
   }
 
   destroy() {
+    this.clearTimer();
     this.view.destroy();
     Object.keys(this).forEach((prop) => {
       delete this[prop as keyof this];
     });
   }
 
-  moveCursorToStart() {
+  moveCursorToStart(focus: boolean) {
     const { tr } = this.view.state;
 
     this.view.dispatch(tr.setSelection(createTextSelection(tr, 1)).scrollIntoView());
-    this.focus();
+    if (focus) {
+      this.focus();
+    }
   }
 
-  moveCursorToEnd() {
+  moveCursorToEnd(focus: boolean) {
     const { tr } = this.view.state;
 
     this.view.dispatch(
       tr.setSelection(createTextSelection(tr, tr.doc.content.size - 1)).scrollIntoView()
     );
 
-    this.focus();
+    if (focus) {
+      this.focus();
+    }
   }
 
   setScrollTop(top: number) {

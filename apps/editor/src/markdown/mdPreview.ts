@@ -3,10 +3,10 @@ import addClass from 'tui-code-snippet/domUtil/addClass';
 import removeClass from 'tui-code-snippet/domUtil/removeClass';
 import on from 'tui-code-snippet/domEvent/on';
 import css from 'tui-code-snippet/domUtil/css';
-import { EditResult, HTMLConvertorMap, MdNode, MdPos, Renderer } from '@toast-ui/toastmark';
+import { EditResult, MdNode, MdPos, Renderer } from '@toast-ui/toastmark';
 
 import { Emitter } from '@t/event';
-import { LinkAttributes } from '@t/editor';
+import { CustomHTMLRenderer, LinkAttributes } from '@t/editor';
 import { cls, createElementWith, removeNode, toggleClass } from '@/utils/dom';
 import { getHTMLRenderConvertors } from '@/markdown/htmlRenderConvertors';
 import { isInlineNode, findClosestNode, getMdStartCh } from '@/utils/markdown';
@@ -32,7 +32,7 @@ type Sanitizer = (html: string) => string;
 
 interface Options {
   linkAttributes: LinkAttributes | null;
-  customHTMLRenderer: HTMLConvertorMap;
+  customHTMLRenderer: CustomHTMLRenderer;
   isViewer: boolean;
   highlight?: boolean;
   sanitizer: Sanitizer;
@@ -87,13 +87,21 @@ class MarkdownPreview {
 
     this.initEvent(highlight);
     this.initContentSection();
+
+    // To prevent overflowing contents in the viewer
+    if (this.isViewer) {
+      this.previewContent.style.overflowWrap = 'break-word';
+    }
   }
 
   private initContentSection() {
     this.previewContent = createElementWith(
       `<div class="${cls('contents')}"></div>`
     ) as HTMLElement;
-    this.el!.appendChild(this.previewContent);
+
+    if (!this.isViewer) {
+      this.el!.appendChild(this.previewContent);
+    }
   }
 
   private toggleActive(active: boolean) {
@@ -102,6 +110,10 @@ class MarkdownPreview {
 
   private initEvent(highlight: boolean) {
     this.eventEmitter.listen('updatePreview', this.update.bind(this));
+
+    if (this.isViewer) {
+      return;
+    }
 
     if (highlight) {
       this.eventEmitter.listen('changeToolbarState', ({ mdNode, cursorPos }) => {
@@ -220,7 +232,7 @@ class MarkdownPreview {
   }
 
   getElement() {
-    return this.el;
+    return this.el!;
   }
 
   getHTML() {

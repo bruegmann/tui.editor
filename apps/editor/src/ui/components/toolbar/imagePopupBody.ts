@@ -124,7 +124,7 @@ export class ImagePopupBody extends Component<Props, State> {
     const { activeTab, file, fileNameElClassName } = this.state;
 
     return html`
-      <div>
+      <div aria-label="${i18n.get('Insert image')}">
         <${Tabs} tabs=${this.tabs} activeTab=${activeTab} onClick=${this.toggleTab} />
         <div style="display:${activeTab === 'url' ? 'block' : 'none'}">
           <label for="toastuiImageUrlInput">${i18n.get('Image URL')}</label>
@@ -143,7 +143,11 @@ export class ImagePopupBody extends Component<Props, State> {
           >
             ${file ? file.name : i18n.get('No file')}
           </span>
-          <button type="button" class="${cls('file-select-button')}" onClick=${this.showFileSelectBox}>
+          <button
+            type="button"
+            class="${cls('file-select-button')}"
+            onClick=${this.showFileSelectBox}
+          >
             ${i18n.get('Choose a file')}
           </button>
           <input

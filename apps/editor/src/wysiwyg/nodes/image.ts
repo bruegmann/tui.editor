@@ -1,8 +1,8 @@
 import { Node as ProsemirrorNode, DOMOutputSpecArray } from 'prosemirror-model';
 
 import NodeSchema from '@/spec/node';
-import { decodeURIGraceful, encodeMarkdownText } from '@/utils/encoder';
-import { sanitizeXSSAttributeValue } from '@/sanitizer/htmlSanitizer';
+import { escapeXml } from '@/utils/common';
+import { sanitizeHTML } from '@/sanitizer/htmlSanitizer';
 
 import { EditorCommand } from '@t/spec';
 import { getCustomAttrs, getDefaultCustomAttrs } from '../helper/node';
@@ -27,12 +27,15 @@ export class Image extends NodeSchema {
         {
           tag: 'img[src]',
           getAttrs(dom: Node | string) {
-            const imageUrl = (dom as HTMLElement).getAttribute('src') || '';
-            const rawHTML = (dom as HTMLElement).getAttribute('data-raw-html');
+            const sanitizedDOM = sanitizeHTML<DocumentFragment>(dom, { RETURN_DOM_FRAGMENT: true })
+              .firstChild as HTMLElement;
+            const imageUrl = sanitizedDOM.getAttribute('src') || '';
+            const rawHTML = sanitizedDOM.getAttribute('data-raw-html');
+            const altText = sanitizedDOM.getAttribute('alt');
 
             return {
-              imageUrl: sanitizeXSSAttributeValue(imageUrl),
-              altText: (dom as HTMLElement).getAttribute('alt'),
+              imageUrl,
+              altText,
               ...(rawHTML && { rawHTML }),
             };
           },
@@ -42,7 +45,7 @@ export class Image extends NodeSchema {
         return [
           attrs.rawHTML || 'img',
           {
-            src: attrs.imageUrl,
+            src: escapeXml(attrs.imageUrl),
             ...(attrs.altText && { alt: attrs.altText }),
             ...getCustomAttrs(attrs),
           },
@@ -60,8 +63,8 @@ export class Image extends NodeSchema {
       }
 
       const node = schema.nodes.image.createAndFill({
-        imageUrl: encodeMarkdownText(decodeURIGraceful(imageUrl), true),
-        ...(altText && { altText: encodeMarkdownText(altText, false) }),
+        imageUrl,
+        ...(altText && { altText }),
       });
 
       dispatch!(tr.replaceSelectionWith(node!).scrollIntoView());

@@ -6,6 +6,8 @@ import hasClass from 'tui-code-snippet/domUtil/hasClass';
 import addClass from 'tui-code-snippet/domUtil/addClass';
 import removeClass from 'tui-code-snippet/domUtil/removeClass';
 import matches from 'tui-code-snippet/domUtil/matches';
+import { ALTERNATIVE_TAG_FOR_BR, HTML_TAG, OPEN_TAG, reBR } from './constants';
+import { isNil } from './common';
 
 export function isPositionInBox(style: CSSStyleDeclaration, offsetX: number, offsetY: number) {
   const left = parseInt(style.left, 10);
@@ -20,8 +22,24 @@ export function isPositionInBox(style: CSSStyleDeclaration, offsetX: number, off
 
 const CLS_PREFIX = 'toastui-editor-';
 
-export function cls(...names: string[]) {
-  return names.map((className) => `${CLS_PREFIX}${className}`).join(' ');
+export function cls(...names: (string | [boolean, string])[]) {
+  const result = [];
+
+  for (const name of names) {
+    let className: string | null;
+
+    if (Array.isArray(name)) {
+      className = name[0] ? name[1] : null;
+    } else {
+      className = name;
+    }
+
+    if (className) {
+      result.push(`${CLS_PREFIX}${className}`);
+    }
+  }
+
+  return result.join(' ');
 }
 
 export function clsWithMdPrefix(...names: string[]) {
@@ -212,10 +230,37 @@ export function prependNode(node: Element, appended: string | ArrayLike<Element>
 
 export function setAttributes(attributes: Record<string, any>, element: HTMLElement) {
   Object.keys(attributes).forEach((attrName) => {
-    if (attributes[attrName]) {
-      element.setAttribute(attrName, attributes[attrName]);
-    } else {
+    if (isNil(attributes[attrName])) {
       element.removeAttribute(attrName);
+    } else {
+      element.setAttribute(attrName, attributes[attrName]);
     }
   });
+}
+
+export function replaceBRWithEmptyBlock(html: string) {
+  // remove br in paragraph to compatible with markdown
+  let replacedHTML = html.replace(/<p><br\s*\/*><\/p>/gi, '<p></p>');
+  const reHTMLTag = new RegExp(HTML_TAG, 'ig');
+  const htmlTagMatched = replacedHTML.match(reHTMLTag);
+
+  htmlTagMatched?.forEach((htmlTag, index) => {
+    if (reBR.test(htmlTag)) {
+      let alternativeTag = ALTERNATIVE_TAG_FOR_BR;
+
+      if (index) {
+        const prevTag = htmlTagMatched[index - 1];
+        const openTagMatched = prevTag.match(OPEN_TAG);
+
+        if (openTagMatched && !/br/i.test(openTagMatched[1])) {
+          const [, tagName] = openTagMatched;
+
+          alternativeTag = `</${tagName}><${tagName}>`;
+        }
+      }
+      replacedHTML = replacedHTML.replace(reBR, alternativeTag);
+    }
+  });
+
+  return replacedHTML;
 }

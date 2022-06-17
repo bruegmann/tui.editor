@@ -2,7 +2,7 @@
 
 > GFM  Markdown and WYSIWYG Editor - Productive and Extensible
 
-[![github release version](https://img.shields.io/github/v/release/nhn/tui.editor.svg?include_prereleases)](https://github.com/nhn/tui.editor/releases/latest) [![npm version](https://img.shields.io/npm/v/@toast-ui/editor.svg)](https://www.npmjs.com/package/@toast-ui/editor) [![license](https://img.shields.io/github/license/nhn/tui.editor.svg)](https://github.com/nhn/tui.editor/blob/master/LICENSE) [![PRs welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg)](https://github.com/nhn/tui.editor/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) [![code with hearth by NHN](https://img.shields.io/badge/%3C%2F%3E%20with%20%E2%99%A5%20by-NHN-ff1414.svg)](https://github.com/nhn)
+[![github release version](https://img.shields.io/github/v/release/nhn/tui.editor.svg?include_prereleases)](https://github.com/nhn/tui.editor/releases/latest) [![npm version](https://img.shields.io/npm/v/@toast-ui/editor.svg)](https://www.npmjs.com/package/@toast-ui/editor) [![license](https://img.shields.io/github/license/nhn/tui.editor.svg)](https://github.com/nhn/tui.editor/blob/master/LICENSE) [![PRs welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg)](https://github.com/nhn/tui.editor/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) [![code with hearth by NHN Cloud](https://img.shields.io/badge/%3C%2F%3E%20with%20%E2%99%A5%20by-NHN_Cloud-ff1414.svg)](https://github.com/nhn)
 
 <img src="https://user-images.githubusercontent.com/37766175/121809054-446bac80-cc96-11eb-9139-08c6d9ad2d88.png" />
 
@@ -126,11 +126,12 @@ TOAST UI products are open source, so you can create a pull request(PR) after yo
 
 ### Setup
 
-Fork `main` branch into your personal repository. Clone it to local computer. Install node modules. Before starting development, you should check to haveany errors.
+Fork `main` branch into your personal repository. Clone it to local computer. Install node modules. Before starting development, you should check if there are any errors.
 
 ```sh
 $ git clone https://github.com/{your-personal-repo}/tui.editor.git
 $ npm install
+$ npm run build toastmark
 $ npm run test editor
 ```
 
@@ -138,7 +139,7 @@ $ npm run test editor
 
 ### Develop
 
-You can see your code is reflected as soon as you saving the codes by running a server. Don't miss adding test cases and then make green rights.
+You can see your code reflected as soon as you save the code by running a server. Don't miss adding test cases and then make green rights.
 
 #### Run snowpack-dev-server
 [snowpack](https://www.snowpack.dev/) allows you to run a development server without bundling.
@@ -162,9 +163,9 @@ $ npm test editor
 
 ### Pull Request
 
-Before creating a PR, test and check for any errors. If there are no errors, then commit and push.
+Before uploading your PR, run test one last time to check if there are any errors. If it has no errors, commit and then push it!
 
-For more information, please refer to the Contributing section.
+For more information on PR's steps, please see links in the Contributing section.
 
 ## 💬 Contributing
 
@@ -185,10 +186,10 @@ For more information, please refer to the Contributing section.
 
 ## 🚀 Used By
 
-* [TOAST Dooray! - Collaboration Service (Project, Messenger, Mail, Calendar, Drive, Wiki, Contacts)](https://dooray.com)
+* [NHN Dooray! - Collaboration Service (Project, Messenger, Mail, Calendar, Drive, Wiki, Contacts)](https://dooray.com)
 * [UNOTES - Visual Studio Code Extension](https://marketplace.visualstudio.com/items?itemName=ryanmcalister.Unotes)
 
 
 ## 📜 License
 
-This software is licensed under the [MIT](https://github.com/nhn/tui.editor/blob/master/LICENSE) © [NHN](https://github.com/nhn).
+This software is licensed under the [MIT](https://github.com/nhn/tui.editor/blob/master/LICENSE) © [NHN Cloud](https://github.com/nhn).

@@ -5,16 +5,16 @@ import {
   NodeSpec,
   MarkSpec,
 } from 'prosemirror-model';
-import { HTMLConvertorMap, MdNode } from '@toast-ui/toastmark';
+import { MdNode } from '@toast-ui/toastmark';
 import toArray from 'tui-code-snippet/collection/toArray';
-import { Sanitizer, HTMLSchemaMap } from '@t/editor';
+import { Sanitizer, HTMLSchemaMap, CustomHTMLRenderer } from '@t/editor';
 import { ToDOMAdaptor } from '@t/convertor';
-import { ATTRIBUTE, reHTMLTag } from '@/convertors/toWysiwyg/htmlToWwConvertors';
 import { registerTagWhitelistIfPossible } from '@/sanitizer/htmlSanitizer';
+import { reHTMLTag, ATTRIBUTE } from '@/utils/constants';
 
 export function getChildrenHTML(node: MdNode, typeName: string) {
   return node
-    .literal!.replace(new RegExp(`(<\\s*${typeName}[^>]+?>)|(</${typeName}\\s*[>])`, 'ig'), '')
+    .literal!.replace(new RegExp(`(<\\s*${typeName}[^>]*>)|(</${typeName}\\s*[>])`, 'ig'), '')
     .trim();
 }
 
@@ -24,10 +24,10 @@ export function getHTMLAttrsByHTMLString(html: string) {
 
   return attrs
     ? attrs.reduce<Record<string, string | null>>((acc, attr) => {
-        const [name, value] = attr.trim().split('=');
+        const [name, ...values] = attr.trim().split('=');
 
-        if (value) {
-          acc[name] = value.replace(/'|"/g, '').trim();
+        if (values.length) {
+          acc[name] = values.join('=').replace(/'|"/g, '').trim();
         }
 
         return acc;
@@ -117,7 +117,7 @@ const schemaFactory = {
 };
 
 export function createHTMLSchemaMap(
-  convertorMap: HTMLConvertorMap,
+  convertorMap: CustomHTMLRenderer,
   sanitizeHTML: Sanitizer,
   wwToDOMAdaptor: ToDOMAdaptor
 ): HTMLSchemaMap {

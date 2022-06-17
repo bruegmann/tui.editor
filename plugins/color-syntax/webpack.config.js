@@ -5,12 +5,18 @@ const { name, version, author, license } = require('./package.json');
 
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
 
 const filename = `toastui-${name.replace(/@toast-ui\//, '')}`;
 
 function getOutputConfig(isProduction, isCDN, minify) {
   const defaultConfig = {
+    library: {
+      name: ['toastui', 'Editor', 'plugin', 'uml'],
+      export: 'default',
+      type: 'umd',
+    },
     environment: {
       arrowFunction: false,
       const: false,
@@ -38,10 +44,6 @@ function getOutputConfig(isProduction, isCDN, minify) {
 
   return {
     ...defaultConfig,
-    library: {
-      export: 'default',
-      type: 'commonjs2',
-    },
     path: path.resolve(__dirname, 'dist'),
     filename: `${filename}.js`,
   };
@@ -70,6 +72,7 @@ function getOptimizationConfig(isProduction, minify) {
         extractComments: false,
       })
     );
+    minimizer.push(new CssMinimizerPlugin());
   }
 
   return { minimizer };

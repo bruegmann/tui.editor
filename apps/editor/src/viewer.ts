@@ -4,18 +4,27 @@ import extend from 'tui-code-snippet/object/extend';
 import on from 'tui-code-snippet/domEvent/on';
 import off from 'tui-code-snippet/domEvent/off';
 
-import { ViewerOptions } from '@t/editor';
+import { CustomHTMLRenderer, ViewerOptions } from '@t/editor';
 import { Emitter, Handler } from '@t/event';
 import MarkdownPreview from './markdown/mdPreview';
 import { getPluginInfo } from './helper/plugin';
 import { last, sanitizeLinkAttribute } from './utils/common';
 import EventEmitter from './event/eventEmitter';
 import { cls, isPositionInBox, toggleClass } from './utils/dom';
-import { sanitizeHTML } from './sanitizer/htmlSanitizer';
+import { registerTagWhitelistIfPossible, sanitizeHTML } from './sanitizer/htmlSanitizer';
 
 const TASK_ATTR_NAME = 'data-task';
 const DISABLED_TASK_ATTR_NAME = 'data-task-disabled';
 const TASK_CHECKED_CLASS_NAME = 'checked';
+
+function registerHTMLTagToWhitelist(convertorMap: CustomHTMLRenderer) {
+  ['htmlBlock', 'htmlInline'].forEach((htmlType) => {
+    if (convertorMap[htmlType]) {
+      // register tag white list for preventing to remove the html in sanitizer
+      Object.keys(convertorMap[htmlType]!).forEach((type) => registerTagWhitelistIfPossible(type));
+    }
+  });
+}
 
 /**
  * Class ToastUIEditorViewer
@@ -82,6 +91,8 @@ class ToastUIEditorViewer {
       sanitizer: customHTMLSanitizer || sanitizeHTML,
     };
 
+    registerHTMLTagToWhitelist(rendererOptions.customHTMLRenderer);
+
     if (this.options.events) {
       forEachOwnProperties(this.options.events, (fn, key) => {
         this.on(key, fn);
@@ -109,7 +120,7 @@ class ToastUIEditorViewer {
       isViewer: true,
     });
 
-    on(this.preview.el!, 'mousedown', this.toggleTask.bind(this));
+    on(this.preview.previewContent!, 'mousedown', this.toggleTask.bind(this));
 
     if (initialValue) {
       this.setMarkdown(initialValue);
@@ -136,6 +147,10 @@ class ToastUIEditorViewer {
       isPositionInBox(style, ev.offsetX, ev.offsetY)
     ) {
       toggleClass(element, TASK_CHECKED_CLASS_NAME);
+      this.eventEmitter.emit('change', {
+        source: 'viewer',
+        date: ev,
+      });
     }
   }
 

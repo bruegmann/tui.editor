@@ -25,13 +25,14 @@ describe('languageSelectBox', () => {
       removeEventHandler: jest.fn(),
       addEventType: jest.fn(),
       getEvents: jest.fn(),
+      holdEventInvoke: jest.fn(),
     };
 
     wwContainer = document.createElement('div');
     wwContainer.className = 'toastui-editor ww-mode';
     document.body.appendChild(wwContainer);
 
-    selectBox = new LanguageSelectBox(eventEmitter, ['js', 'css', 'ts']);
+    selectBox = new LanguageSelectBox(document.body, eventEmitter, ['js', 'css', 'ts']);
 
     wrapper = document.body.querySelector(`.${cls(WRAPPER_CLASS_NAME)}`)!;
     input = document.body.querySelector(`.${cls(INPUT_CLASS_NANE)} > input`)!;

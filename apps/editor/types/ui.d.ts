@@ -12,6 +12,7 @@ export interface ToolbarButtonOptions {
   text?: string;
   style?: Record<string, any>;
   popup?: PopupOptions;
+  state?: ToolbarStateKeys;
 }
 
 export interface ToolbarCustomOptions {
@@ -20,11 +21,12 @@ export interface ToolbarCustomOptions {
   el?: HTMLElement;
   popup?: PopupOptions;
   hidden?: boolean;
+  state?: ToolbarStateKeys;
   onMounted?: (execCommand: ExecCommand) => void;
+  onUpdated?: (toolbarState: ToolbarItemState) => void;
 }
 
 export type ToolbarButtonInfo = {
-  state?: ToolbarStateKeys;
   hidden?: boolean;
 } & ToolbarButtonOptions;
 
@@ -108,21 +110,28 @@ export interface TabInfo {
   text: string;
 }
 
-interface ToolbarState {
-  taskList: boolean;
-  orderedList: boolean;
-  bulletList: boolean;
-  table: boolean;
-  strong: boolean;
-  emph: boolean;
-  strike: boolean;
-  heading: boolean;
-  thematicBreak: boolean;
-  blockQuote: boolean;
-  code: boolean;
-  codeBlock: boolean;
+interface ToolbarItemState {
+  active: boolean;
+  disabled?: boolean;
 }
-export type ToolbarStateKeys = keyof ToolbarState;
+
+interface ToolbarStateMap {
+  taskList: ToolbarItemState;
+  orderedList: ToolbarItemState;
+  bulletList: ToolbarItemState;
+  table: ToolbarItemState;
+  strong: ToolbarItemState;
+  emph: ToolbarItemState;
+  strike: ToolbarItemState;
+  heading: ToolbarItemState;
+  thematicBreak: ToolbarItemState;
+  blockQuote: ToolbarItemState;
+  code: ToolbarItemState;
+  codeBlock: ToolbarItemState;
+  indent: ToolbarItemState;
+  outdent: ToolbarItemState;
+}
+export type ToolbarStateKeys = keyof ToolbarStateMap;
 
 export type ToolbarItemInfo = ToolbarCustomOptions | ToolbarButtonInfo;
 export type ToolbarGroupInfo = ToolbarItemInfo[] & { hidden?: boolean };

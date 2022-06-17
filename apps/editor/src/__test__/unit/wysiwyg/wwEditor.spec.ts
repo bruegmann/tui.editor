@@ -9,8 +9,14 @@ import { createHTMLSchemaMap } from '@/wysiwyg/nodes/html';
 import { sanitizeHTML } from '@/sanitizer/htmlSanitizer';
 import { createHTMLrenderer } from '../markdown/util';
 
+jest.useFakeTimers();
+
 describe('WysiwygEditor', () => {
   let wwe: WysiwygEditor, em: EventEmitter, el: HTMLElement;
+
+  function assertToContainHTML(html: string) {
+    expect(wwe.view.dom.innerHTML).toContain(html);
+  }
 
   function setContent(content: string) {
     const wrapper = document.createElement('div');
@@ -34,6 +40,7 @@ describe('WysiwygEditor', () => {
   });
 
   afterEach(() => {
+    jest.clearAllTimers();
     if (Object.keys(wwe).length) {
       wwe.destroy();
     }
@@ -49,6 +56,9 @@ describe('WysiwygEditor', () => {
 
     it(`focus() enable editor's dom selection state`, () => {
       wwe.focus();
+
+      // run setTimeout function when focusing the editor
+      jest.runAllTimers();
 
       expect(document.activeElement).toEqual(wwe.view.dom);
     });
@@ -75,7 +85,7 @@ describe('WysiwygEditor', () => {
     it('setPlaceholder() attach placeholder element', () => {
       wwe.setPlaceholder('placeholder text');
 
-      expect(wwe.getHTML()).toBe(oneLineTrim`
+      assertToContainHTML(oneLineTrim`
         <p>
           <span class="placeholder ProseMirror-widget">placeholder text</span>
           <br>
@@ -122,7 +132,7 @@ describe('WysiwygEditor', () => {
       wwe.setSelection(3, 7);
       wwe.replaceSelection('new foo\nnew bar');
 
-      expect(wwe.getHTML()).toBe(oneLineTrim`
+      assertToContainHTML(oneLineTrim`
         <p>fonew foo</p>
         <p>new barar</p>
       `);
@@ -166,22 +176,22 @@ describe('WysiwygEditor', () => {
       '<iframe width="420" height="315" src="https://www.youtube.com/embed/XyenY12fzAk"></iframe>'
     );
 
-    expect(wwe.getHTML()).toBe(
-      '<iframe width="420" height="315" src="https://www.youtube.com/embed/XyenY12fzAk" class="html-block ProseMirror-selectednode" draggable="true"></iframe>'
+    assertToContainHTML(
+      '<iframe src="https://www.youtube.com/embed/XyenY12fzAk" height="315" width="420" class="html-block ProseMirror-selectednode" draggable="true"></iframe>'
     );
   });
 
   it('should display html inline element properly', () => {
     setContent('<big class="my-inline">text</big>');
 
-    expect(wwe.getHTML()).toBe('<p><big class="my-inline">text</big></p>');
+    assertToContainHTML('<p><big class="my-inline">text</big></p>');
   });
 
   it('should sanitize html element', () => {
     setContent('<iframe width="420" height="315" src="javascript: alert(1);"></iframe>');
 
-    expect(wwe.getHTML()).toBe(
-      '<iframe width="420" height="315" class="html-block ProseMirror-selectednode" draggable="true"></iframe>'
+    assertToContainHTML(
+      '<iframe height="315" width="420" class="html-block ProseMirror-selectednode" draggable="true"></iframe>'
     );
   });
 });

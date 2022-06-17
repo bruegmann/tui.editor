@@ -2,8 +2,8 @@ import { Mark as ProsemirrorMark, DOMOutputSpecArray } from 'prosemirror-model';
 import { toggleMark } from 'prosemirror-commands';
 
 import Mark from '@/spec/mark';
-import { decodeURIGraceful, encodeMarkdownText } from '@/utils/encoder';
-import { sanitizeXSSAttributeValue } from '@/sanitizer/htmlSanitizer';
+import { escapeXml } from '@/utils/common';
+import { sanitizeHTML } from '@/sanitizer/htmlSanitizer';
 import { createTextNode } from '@/helper/manipulation';
 import { getCustomAttrs, getDefaultCustomAttrs } from '@/wysiwyg/helper/node';
 
@@ -26,7 +26,7 @@ export class Link extends Mark {
     return {
       attrs: {
         linkUrl: { default: '' },
-        linkText: { default: null },
+        title: { default: null },
         rawHTML: { default: null },
         ...getDefaultCustomAttrs(),
       },
@@ -35,12 +35,15 @@ export class Link extends Mark {
         {
           tag: 'a[href]',
           getAttrs(dom: Node | string) {
-            const href = (dom as HTMLElement).getAttribute('href') || '';
-            const rawHTML = (dom as HTMLElement).getAttribute('data-raw-html');
+            const sanitizedDOM = sanitizeHTML<DocumentFragment>(dom, { RETURN_DOM_FRAGMENT: true })
+              .firstChild as HTMLElement;
+            const href = sanitizedDOM.getAttribute('href') || '';
+            const title = sanitizedDOM.getAttribute('title') || '';
+            const rawHTML = sanitizedDOM.getAttribute('data-raw-html');
 
             return {
-              linkUrl: sanitizeXSSAttributeValue(href),
-              linkText: (dom as HTMLElement).textContent,
+              linkUrl: href,
+              title,
               ...(rawHTML && { rawHTML }),
             };
           },
@@ -49,7 +52,7 @@ export class Link extends Mark {
       toDOM: ({ attrs }: ProsemirrorMark): DOMOutputSpecArray => [
         attrs.rawHTML || 'a',
         {
-          href: attrs.linkUrl,
+          href: escapeXml(attrs.linkUrl),
           ...(this.linkAttributes as DOMOutputSpecArray),
           ...getCustomAttrs(attrs),
         },
@@ -64,10 +67,7 @@ export class Link extends Mark {
       const { empty, from, to } = selection;
 
       if (from && to && linkUrl) {
-        const attrs = {
-          linkUrl: encodeMarkdownText(decodeURIGraceful(linkUrl), true),
-          linkText: encodeMarkdownText(linkText, false),
-        };
+        const attrs = { linkUrl };
         const mark = schema.mark('link', attrs);
 
         if (empty && linkText) {

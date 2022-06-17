@@ -3,6 +3,9 @@ import { EditorView } from 'prosemirror-view';
 import { Fragment, Slice } from 'prosemirror-model';
 import { ReplaceAroundStep } from 'prosemirror-transform';
 import { MdPos, ToastMark } from '@toast-ui/toastmark';
+
+import toArray from 'tui-code-snippet/collection/toArray';
+
 import { MdContext } from '@t/spec';
 import { Emitter } from '@t/event';
 import { WidgetStyle } from '@t/editor';
@@ -47,6 +50,7 @@ interface MarkdownOptions {
 }
 
 const EVENT_TYPE = 'cut';
+const reLineEnding = /\r\n|\n|\r/;
 
 export default class MdEditor extends EditorBase {
   private toastMark: ToastMark;
@@ -72,15 +76,20 @@ export default class MdEditor extends EditorBase {
     this.commands = this.createCommands();
     this.specs.setContext({ ...this.context, view: this.view });
     this.createClipboard();
-    this.eventEmitter.listen('changePreviewTabWrite', () => this.toggleActive(true));
+    // To prevent unnecessary focus setting during initial rendering
+    this.eventEmitter.listen('changePreviewTabWrite', (isMarkdownTabMounted?: boolean) =>
+      this.toggleActive(true, isMarkdownTabMounted)
+    );
     this.eventEmitter.listen('changePreviewTabPreview', () => this.toggleActive(false));
     this.initEvent();
   }
 
-  private toggleActive(active: boolean) {
+  private toggleActive(active: boolean, isMarkdownTabMounted?: boolean) {
     toggleClass(this.el!, 'active', active);
     if (active) {
-      this.focus();
+      if (!isMarkdownTabMounted) {
+        this.focus();
+      }
     } else {
       this.blur();
     }
@@ -95,11 +104,18 @@ export default class MdEditor extends EditorBase {
       const items = clipboardData && clipboardData.items;
 
       if (items) {
-        const imageBlob = pasteImageOnly(items);
+        const containRtfItem = toArray(items).some(
+          (item) => item.kind === 'string' && item.type === 'text/rtf'
+        );
 
-        if (imageBlob) {
-          ev.preventDefault();
-          emitImageBlobHook(this.eventEmitter, imageBlob, ev.type);
+        // if it contains rtf, it's most likely copy paste from office -> no image
+        if (!containRtfItem) {
+          const imageBlob = pasteImageOnly(items);
+
+          if (imageBlob) {
+            ev.preventDefault();
+            emitImageBlobHook(this.eventEmitter, imageBlob, ev.type);
+          }
         }
       }
     });
@@ -150,12 +166,12 @@ export default class MdEditor extends EditorBase {
   }
 
   createPlugins() {
-    return this.defaultPlugins.concat([
+    return [
       syntaxHighlight(this.context),
       previewHighlight(this.context),
       smartTask(this.context),
       ...this.createPluginProps(),
-    ]);
+    ].concat(this.defaultPlugins);
   }
 
   createView() {
@@ -269,7 +285,7 @@ export default class MdEditor extends EditorBase {
   replaceSelection(text: string, start?: MdPos, end?: MdPos) {
     let newTr;
     const { tr, schema, doc } = this.view.state;
-    const lineTexts = text.split('\n');
+    const lineTexts = text.split(reLineEnding);
     const nodes = lineTexts.map((lineText) =>
       createParagraph(schema, createNodesWithWidget(lineText, schema))
     );
@@ -322,7 +338,7 @@ export default class MdEditor extends EditorBase {
   }
 
   setMarkdown(markdown: string, cursorToEnd = true) {
-    const lineTexts = markdown.split('\n');
+    const lineTexts = markdown.split(reLineEnding);
     const { tr, doc, schema } = this.view.state;
     const nodes = lineTexts.map((lineText) =>
       createParagraph(schema, createNodesWithWidget(lineText, schema))
@@ -331,7 +347,7 @@ export default class MdEditor extends EditorBase {
     this.view.dispatch(tr.replaceWith(0, doc.content.size, nodes));
 
     if (cursorToEnd) {
-      this.moveCursorToEnd();
+      this.moveCursorToEnd(true);
     }
   }
 

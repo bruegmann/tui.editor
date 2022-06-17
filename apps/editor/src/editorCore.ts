@@ -38,10 +38,11 @@ import { WwToDOMAdaptor } from './wysiwyg/adaptor/wwToDOMAdaptor';
 import { ScrollSync } from './markdown/scroll/scrollSync';
 import { addDefaultImageBlobHook } from './helper/image';
 import { setWidgetRules } from './widget/rules';
-import { cls } from './utils/dom';
+import { cls, replaceBRWithEmptyBlock } from './utils/dom';
 import { sanitizeHTML } from './sanitizer/htmlSanitizer';
 import { createHTMLSchemaMap } from './wysiwyg/nodes/html';
 import { getHTMLRenderConvertors } from './markdown/htmlRenderConvertors';
+import { buildQuery } from './queries/queryManager';
 
 /**
  * ToastUIEditorCore
@@ -82,9 +83,10 @@ import { getHTMLRenderConvertors } from './markdown/htmlRenderConvertors';
  *     @param {boolean} [options.frontMatter=false] - whether use the front matter
  *     @param {Array.<object>} [options.widgetRules=[]] - The rules for replacing the text with widget node
  *     @param {string} [options.theme] - The theme to style the editor with. The default is included in toastui-editor.css.
+ *     @param {autofocus} [options.autofocus=true] - automatically focus the editor on creation.
  */
 class ToastUIEditorCore {
-  private initialHtml: string;
+  private initialHTML: string;
 
   private toastMark: ToastMark;
 
@@ -110,6 +112,8 @@ class ToastUIEditorCore {
 
   private scrollSync: ScrollSync;
 
+  private placeholder?: string;
+
   eventEmitter: Emitter;
 
   protected options: Required<EditorOptions>;
@@ -117,7 +121,7 @@ class ToastUIEditorCore {
   protected pluginInfo: PluginInfoResult;
 
   constructor(options: EditorOptions) {
-    this.initialHtml = options.el.innerHTML;
+    this.initialHTML = options.el.innerHTML;
     options.el.innerHTML = '';
 
     this.options = extend(
@@ -148,6 +152,7 @@ class ToastUIEditorCore {
         frontMatter: false,
         widgetRules: [],
         theme: 'light',
+        autofocus: true,
       },
       options
     );
@@ -166,6 +171,9 @@ class ToastUIEditorCore {
 
     this.mode = initialEditType || 'markdown';
     this.mdPreviewStyle = this.options.previewStyle;
+
+    this.i18n = i18n;
+    this.i18n.setCode(this.options.language);
 
     this.eventEmitter = new EventEmitter();
 
@@ -197,22 +205,11 @@ class ToastUIEditorCore {
       sanitizer: customHTMLSanitizer || sanitizeHTML,
     };
     const wwToDOMAdaptor = new WwToDOMAdaptor(linkAttributes, rendererOptions.customHTMLRenderer);
-
-    if (this.options.hooks) {
-      forEachOwnProperties(this.options.hooks, (fn, key) => this.addHook(key, fn));
-    }
-
-    if (this.options.events) {
-      forEachOwnProperties(this.options.events, (fn, key) => this.on(key, fn));
-    }
     const htmlSchemaMap = createHTMLSchemaMap(
       rendererOptions.customHTMLRenderer,
       rendererOptions.sanitizer,
       wwToDOMAdaptor
     );
-
-    this.i18n = i18n;
-    this.i18n.setCode(this.options.language);
 
     this.toastMark = new ToastMark('', {
       disallowedHtmlBlockTags: ['br', 'img'],
@@ -262,7 +259,7 @@ class ToastUIEditorCore {
     }
 
     if (!this.options.initialValue) {
-      this.setHTML(this.initialHtml, false);
+      this.setHTML(this.initialHTML, false);
     }
 
     this.commandManager = new CommandManager(
@@ -279,13 +276,33 @@ class ToastUIEditorCore {
     this.scrollSync = new ScrollSync(this.mdEditor, this.preview, this.eventEmitter);
     this.addInitEvent();
     this.addInitCommand(mdCommands, wwCommands);
+    buildQuery(this);
+
+    if (this.options.hooks) {
+      forEachOwnProperties(this.options.hooks, (fn, key) => this.addHook(key, fn));
+    }
+
+    if (this.options.events) {
+      forEachOwnProperties(this.options.events, (fn, key) => this.on(key, fn));
+    }
 
     this.eventEmitter.emit('load', this);
-    this.moveCursorToStart();
+    this.moveCursorToStart(this.options.autofocus);
   }
 
   private addInitEvent() {
     this.on('needChangeMode', this.changeMode.bind(this));
+    this.on('loadUI', () => {
+      if (this.height !== 'auto') {
+        // 75px equals default editor ui height - the editing area height
+        const minHeight = `${Math.min(
+          parseInt(this.minHeight, 10),
+          parseInt(this.height, 10) - 75
+        )}px`;
+
+        this.setMinHeight(minHeight);
+      }
+    });
     addDefaultImageBlobHook(this.eventEmitter);
   }
 
@@ -412,16 +429,18 @@ class ToastUIEditorCore {
 
   /**
    * Set cursor position to end
+   * @param {boolean} [focus] - automatically focus the editor
    */
-  moveCursorToEnd() {
-    this.getCurrentModeEditor().moveCursorToEnd();
+  moveCursorToEnd(focus = true) {
+    this.getCurrentModeEditor().moveCursorToEnd(focus);
   }
 
   /**
    * Set cursor position to start
+   * @param {boolean} [focus] - automatically focus the editor
    */
-  moveCursorToStart() {
-    this.getCurrentModeEditor().moveCursorToStart();
+  moveCursorToStart(focus = true) {
+    this.getCurrentModeEditor().moveCursorToStart(focus);
   }
 
   /**
@@ -448,7 +467,8 @@ class ToastUIEditorCore {
   setHTML(html = '', cursorToEnd = true) {
     const container = document.createElement('div');
 
-    container.innerHTML = html;
+    // the `br` tag should be replaced with empty block to separate between blocks
+    container.innerHTML = replaceBRWithEmptyBlock(html);
     const wwNode = DOMParser.fromSchema(this.wwEditor.schema).parse(container);
 
     if (this.isMarkdownMode()) {
@@ -475,17 +495,26 @@ class ToastUIEditorCore {
    * @returns {string} html string
    */
   getHTML() {
-    if (this.isWysiwygMode()) {
-      this.mdEditor.setMarkdown(this.convertor.toMarkdownText(this.wwEditor.getModel()));
+    this.eventEmitter.holdEventInvoke(() => {
+      if (this.isMarkdownMode()) {
+        const mdNode = this.toastMark.getRootNode();
+        const wwNode = this.convertor.toWysiwygModel(mdNode);
+
+        this.wwEditor.setModel(wwNode!);
+      }
+    });
+    const html = this.wwEditor.view.dom.innerHTML;
+
+    if (this.placeholder) {
+      const rePlaceholder = new RegExp(
+        `<span class="placeholder[^>]+>${this.placeholder}</span>`,
+        'i'
+      );
+
+      return html.replace(rePlaceholder, '');
     }
 
-    const mdNode = this.toastMark.getRootNode();
-    const mdRenderer = this.preview.getRenderer();
-
-    return mdRenderer
-      .render(mdNode)
-      .replace(/\sdata-nodeid="\d{1,}"/g, '')
-      .trim();
+    return html;
   }
 
   /**
@@ -583,11 +612,10 @@ class ToastUIEditorCore {
     if (isString(height)) {
       if (height === 'auto') {
         addClass(el, 'auto-height');
-        this.setMinHeight(this.getMinHeight());
       } else {
         removeClass(el, 'auto-height');
-        this.setMinHeight(height);
       }
+      this.setMinHeight(this.getMinHeight());
     }
 
     css(el, { height });
@@ -607,19 +635,22 @@ class ToastUIEditorCore {
    * @param {string} minHeight - min content height in pixel
    */
   setMinHeight(minHeight: string) {
-    this.minHeight = minHeight;
+    if (minHeight !== this.minHeight) {
+      const height = this.height || this.options.height;
 
-    const editorHeight = this.options.el.clientHeight;
-    const editorSectionHeight = document.querySelector(`.${cls('main')}`)?.clientHeight || 0;
-    const diffHeight = editorHeight - editorSectionHeight;
+      if (height !== 'auto' && this.options.el.querySelector(`.${cls('main')}`)) {
+        // 75px equals default editor ui height - the editing area height
+        minHeight = `${Math.min(parseInt(minHeight, 10), parseInt(height, 10) - 75)}px`;
+      }
 
-    let minHeightNum = parseInt(minHeight, 10);
+      const minHeightNum = parseInt(minHeight, 10);
 
-    minHeightNum = Math.max(minHeightNum - diffHeight, 0);
+      this.minHeight = minHeight;
 
-    this.wwEditor.setMinHeight(minHeightNum);
-    this.mdEditor.setMinHeight(minHeightNum);
-    this.preview.setMinHeight(minHeightNum);
+      this.wwEditor.setMinHeight(minHeightNum);
+      this.mdEditor.setMinHeight(minHeightNum);
+      this.preview.setMinHeight(minHeightNum);
+    }
   }
 
   /**
@@ -685,6 +716,7 @@ class ToastUIEditorCore {
       this.mdEditor.setMarkdown(this.convertor.toMarkdownText(wwNode), !withoutFocus);
     }
 
+    this.eventEmitter.emit('removePopupWidget');
     this.eventEmitter.emit('changeMode', mode);
 
     if (!withoutFocus) {
@@ -773,6 +805,7 @@ class ToastUIEditorCore {
    * @param {string} placeholder - placeholder to set
    */
   setPlaceholder(placeholder: string) {
+    this.placeholder = placeholder;
     this.mdEditor.setPlaceholder(placeholder);
     this.wwEditor.setPlaceholder(placeholder);
   }

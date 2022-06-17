@@ -12,14 +12,14 @@ interface Props {
 }
 
 export class CustomPopupBody extends Component<Props> {
-  constructor(props: Props) {
-    super(props);
-    props.eventEmitter.listen('closePopup', this.props.hidePopup);
-  }
-
   mounted() {
     // append the custom popup body element
     this.refs.el.appendChild(this.props.body);
+  }
+
+  updated(prevProps: Props) {
+    // update custom popup element
+    this.refs.el.replaceChild(this.props.body, prevProps.body);
   }
 
   render() {

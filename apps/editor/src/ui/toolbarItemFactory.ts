@@ -190,6 +190,7 @@ function createDefaultToolbarItemInfo(type: string) {
         className: 'indent',
         command: 'indent',
         tooltip: i18n.get('Indent'),
+        state: 'indent',
       };
       break;
     case 'outdent':
@@ -198,6 +199,7 @@ function createDefaultToolbarItemInfo(type: string) {
         className: 'outdent',
         command: 'outdent',
         tooltip: i18n.get('Outdent'),
+        state: 'outdent',
       };
       break;
     case 'scrollSync':
@@ -229,7 +231,6 @@ interface Payload {
   initialValues?: PopupInitialValues;
 }
 
-// eslint-disable-next-line consistent-return
 export function createPopupInfo(type: string, payload: Payload): PopupInfo | null {
   const { el, pos, popup, initialValues } = payload;
 

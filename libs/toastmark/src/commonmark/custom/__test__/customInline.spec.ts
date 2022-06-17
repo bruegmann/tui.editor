@@ -27,7 +27,7 @@ describe('customInline', () => {
 
     const html = renderer.render(root);
 
-    expect(html).toBe('<p>Hello <span>World</span></p>\n');
+    expect(html).toBe('<p>Hello <span>$$myInline World$$</span></p>\n');
   });
 
   it('nested markdown text example', () => {
@@ -35,7 +35,7 @@ describe('customInline', () => {
     const para = root.firstChild!;
     const text = para.firstChild!;
     const customInline = text.next as CustomInlineNode;
-    const emph = customInline.firstChild!;
+    const emph = customInline.lastChild!;
 
     expect(text.literal).toBe('Hello ');
     expect(customInline.info).toBe('myInline');
@@ -50,7 +50,7 @@ describe('customInline', () => {
 
     const html = renderer.render(root);
 
-    expect(html).toBe('<p>Hello <span><em>World</em></span></p>\n');
+    expect(html).toBe('<p>Hello <span>$$myInline <em>World</em>$$</span></p>\n');
   });
 
   it('should be parsed as text without meta information', () => {
@@ -67,5 +67,23 @@ describe('customInline', () => {
     const html = renderer.render(root);
 
     expect(html).toBe('<p>Hello $$ world$$</p>\n');
+  });
+
+  it('should be render properly with meta information only', () => {
+    const root = reader.parse('Hello $$myInline$$');
+    const para = root.firstChild!;
+    const text = para.firstChild!;
+    const customInline = text.next as CustomInlineNode;
+
+    expect(text.literal).toBe('Hello ');
+    expect(customInline.info).toBe('myInline');
+    expect(customInline.sourcepos).toEqual([
+      [1, 7],
+      [1, 18],
+    ]);
+
+    const html = renderer.render(root);
+
+    expect(html).toBe('<p>Hello <span>$$myInline$$</span></p>\n');
   });
 });
