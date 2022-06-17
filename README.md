@@ -1,13 +1,5 @@
 # TOAST UI Editor for React
 
-```
-NOTE FROM lgk-bsw: I changed the peer deps in package.json, so this package can be used with React 16 and React 17:
-
-  "peerDependencies": {
-    "react": "^16.0.0 || ^17.0.0"
-  },
-```
-
 > This is a [React](https://reactjs.org/) component wrapping [TOAST UI Editor](https://github.com/nhn/tui.editor/tree/master/apps/editor).
 
 [![npm version](https://img.shields.io/npm/v/@toast-ui/react-editor.svg)](https://www.npmjs.com/package/@toast-ui/react-editor)
