@@ -1,7 +1,7 @@
 {
-  "name": "@mbe1/react19-editor",
-  "version": "3.2.4",
-  "description": "TOAST UI Editor for React19",
+  "name": "@toast-ui/react-editor",
+  "version": "3.2.3",
+  "description": "TOAST UI Editor for React",
   "files": [
     "dist",
     "index.d.ts"
@@ -32,9 +32,7 @@
   "devDependencies": {
     "@types/react": "^17.0.3",
     "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "webpack": "^5.99.9",
-    "webpack-cli": "^6.0.1"
+    "react-dom": "^17.0.1"
   },
   "dependencies": {
     "@toast-ui/editor": "^3.2.2"
